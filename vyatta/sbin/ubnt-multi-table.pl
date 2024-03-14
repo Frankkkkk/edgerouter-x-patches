@@ -27,11 +27,13 @@ use constant {
 
     # Misc
     DISTANCE_UNDEFINED      => -1,
+    INTERFACE_UNDEFINED      => "",
 };
 
 my ($action, $table, $route_type, $route, $nexthop);
 my $af = AF_IPV4;
 my $distance = DISTANCE_UNDEFINED;
+my $interface = INTERFACE_UNDEFINED;
 my $debug_flag = 0;
 GetOptions(
     "action=s"         => \$action,
@@ -40,6 +42,7 @@ GetOptions(
     "route=s"          => \$route,
     "next-hop=s"       => \$nexthop,
     "distance=s"       => \$distance,
+    "interface=s"       => \$interface,
     "address-family=s" => \$af,
     "debug=s"          => \$debug_flag,
 );
@@ -82,7 +85,7 @@ sub run_cmd {
 }
 
 sub create_ip_cmd {
-    my ($action, $table, $route_type, $route, $nexthop, $distance) = @_;
+    my ($action, $table, $route_type, $route, $nexthop, $distance, $interface) = @_;
 
     # Action/table
     my $cmd = "$ip_cmd route $action table $table";
@@ -100,6 +103,8 @@ sub create_ip_cmd {
 
     # Distance
     $cmd = "$cmd metric $distance" if ($distance > DISTANCE_UNDEFINED);
+    # Interface
+    $cmd = "$cmd dev $interface" if ($interface ne INTERFACE_UNDEFINED);
     return $cmd;
 }
 
@@ -158,8 +163,13 @@ sub add_kernel_route_if_not_disabled {
         $distance = $config->returnOrigValue("$path distance");
     }
 
+    my $interface = INTERFACE_UNDEFINED;
+    if ($config->existsOrig("$path interface") ) {
+        $interface = $config->returnOrigValue("$path interface");
+    }
+
     # Update kernel route
-    run_cmd(create_ip_cmd(ACTION_ADD, $table, $nh_type, $route, $nh, $distance));
+    run_cmd(create_ip_cmd(ACTION_ADD, $table, $nh_type, $route, $nh, $distance, $interface));
 }
 
 sub update_all_tables {
@@ -213,14 +223,14 @@ if (not defined($table)) {
 # Add route to specified routing table
 } elsif ($action eq ACTION_ADD) {
     $nexthop = "undefined" unless $nexthop;
-    log_msg("add_route($table, $route_type, $route, $nexthop, $distance)");
-    run_cmd(create_ip_cmd($action, $table, $route_type, $route, $nexthop, $distance));
+    log_msg("add_route($table, $route_type, $route, $nexthop, $distance, $interface)");
+    run_cmd(create_ip_cmd($action, $table, $route_type, $route, $nexthop, $distance, $interface));
 
 # Delete route from specified routing table
 } elsif ($action eq ACTION_DEL) {
     $nexthop = "undefined" unless $nexthop;
-    log_msg("del_route($table, $route_type, $route, $nexthop, $distance)");
-    run_cmd(create_ip_cmd($action, $table, $route_type, $route, $nexthop, $distance));
+    log_msg("del_route($table, $route_type, $route, $nexthop, $distance, $interface)");
+    run_cmd(create_ip_cmd($action, $table, $route_type, $route, $nexthop, $distance, $interface));
 
 # Show routes from specified routing table
 } elsif ($action eq ACTION_SHOW) {

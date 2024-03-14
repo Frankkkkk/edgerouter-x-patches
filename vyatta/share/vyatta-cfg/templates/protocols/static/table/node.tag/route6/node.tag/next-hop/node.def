@@ -27,12 +27,17 @@ end:
       then
          dist="--distance $VAR(./distance/@)"
       fi
+      if [[ -n "$VAR(./interface/@)" ]]
+      then
+         interface="--interface $VAR(./interface/@)"
+      fi
         ${vyatta_sbindir}/ubnt-multi-table.pl $table $dist \
                                               --action=add \
                                               --address-family=ipv6 \
                                               --route-type=next-hop \
                                               --route=$VAR(../@) \
-                                              --next-hop=$VAR(@)
+                                              --next-hop=$VAR(@) \
+                                              $interface
     
     fi
   else
