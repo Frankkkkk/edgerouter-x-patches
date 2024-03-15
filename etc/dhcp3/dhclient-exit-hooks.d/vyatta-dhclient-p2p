@@ -13,7 +13,7 @@ then
   then
     if [ -n "$old_ip_address" -a -n "$old_routers" -a "$old_subnet_mask" = "255.255.255.255" ]
     then
-      if [ "$old_ip_address" != "new_ip_address" ]
+      if [ "$old_ip_address" != "$new_ip_address" ]
       then
         set -- $old_routers
         first_router=$1
